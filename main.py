@@ -1,42 +1,41 @@
-from fastapi import FastAPI, Depends, HTTPException, Security
+from fastapi import FastAPI, Depends, HTTPException, Security, BackgroundTasks
 from fastapi.security.api_key import APIKeyHeader
 import requests
 from bs4 import BeautifulSoup
-from starlette import status
+import httpx # Para o Telegram
 
-app = FastAPI(title="API Segura de Scraping")
+app = FastAPI(title="API Monitor com Alerta")
 
-# 1. Definimos o nome da chave que o usuário deve enviar no cabeçalho
-API_KEY = "marcelo123" # Esta é a sua senha!
+# --- SEGURANÇA ---
+API_KEY = "marcelo123"
 API_KEY_NAME = "access_token"
 api_key_header = APIKeyHeader(name=API_KEY_NAME, auto_error=False)
 
-# 2. Função que valida se a chave está correta
+# --- CONFIG BOT ---
+TELEGRAM_TOKEN = "8708615370:AAGRoGhwVqEWXMZ_TN3CvzR_09srNSda4_Y"
+CHAT_ID = "8708615370"
+
+async def enviar_telegram(mensagem: str):
+    url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
+    async with httpx.AsyncClient() as client:
+        await client.post(url, json={"chat_id": CHAT_ID, "text": mensagem})
+
 async def get_api_key(header_key: str = Security(api_key_header)):
-    if header_key == API_KEY:
-        return header_key
-    raise HTTPException(
-        status_code=status.HTTP_403_FORBIDDEN, 
-        detail="Chave de API inválida ou ausente"
-    )
+    if header_key == API_KEY: return header_key
+    raise HTTPException(status_code=403, detail="Acesso Negado")
 
-@app.get("/")
-def home():
-    return {"msg": "API Online. Use /docs para testar com sua chave."}
-
-# 3. Aplicamos a trava (Depends) apenas na rota de coleta
-@app.get("/coletar-agora")
-def coletar_viva(token: str = Depends(get_api_key)):
+@app.get("/monitorar")
+async def monitorar_com_alerta(bt: BackgroundTasks, token: str = Depends(get_api_key)):
+    # 1. Faz o Scraping
     url = "http://books.toscrape.com/catalogue/page-1.html"
-    resposta = requests.get(url)
-    sopa = BeautifulSoup(resposta.text, 'html.parser')
+    res = requests.get(url)
+    soup = BeautifulSoup(res.text, 'html.parser')
+    primeiro_livro = soup.find('article', class_='product_pod').h3.a['title']
     
-    livros_pagina = []
-    produtos = sopa.find_all('article', class_='product_pod')
+    # 2. Lógica de Alerta (Exemplo: avisa sempre que rodar)
+    alerta_msg = f"✅ Monitoramento Concluído!\n📦 Primeiro livro da lista: {primeiro_livro}"
     
-    for p in produtos:
-        titulo = p.h3.a['title']
-        preco = p.find('p', class_='price_color').text
-        livros_pagina.append({"titulo": titulo, "preco": preco})
+    # 3. Dispara o Telegram em segundo plano (não trava a API)
+    bt.add_task(enviar_telegram, alerta_msg)
     
-    return {"status": "Autorizado", "dados": livros_pagina}
+    return {"status": "Processado", "msg": "Alerta enviado ao Telegram!"}
