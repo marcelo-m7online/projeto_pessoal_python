@@ -16,3 +16,8 @@ Este é um projeto de automação desenvolvido em **Python** para coletar dados 
 
 ## 📈 Insights de Aprendizado
 Durante o desenvolvimento, lidei com desafios de **encoding** (caracteres especiais no HTML) e aprendi a estruturar laços de repetição para coleta em massa.
+
+## 📊 Resultados do Crawler
+* **Total de itens minerados:** 1.000 livros.
+* **Tempo de execução médio:** ~15 segundos.
+* **Formato de saída:** CSV estruturado.
