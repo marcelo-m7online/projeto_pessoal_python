@@ -16,3 +16,9 @@ Este é um projeto de automação desenvolvido em **Python** para coletar dados 
 
 ## 📈 Insights de Aprendizado
 Durante o desenvolvimento, lidei com desafios de **encoding** (caracteres especiais no HTML) e aprendi a estruturar laços de repetição para coleta em massa.
+
+Checklist Final do seu Portfólio
+web_scraping.py: O robô que navega por todas as páginas e coleta os 1000 livros.
+gerar_grafico.py: O script que transforma o CSV em uma imagem de análise.
+todos_os_livros.csv: O resultado da sua mineração de dados.
+grafico_precos.png: A prova visual do seu trabalho.
